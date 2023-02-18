@@ -1,0 +1,23 @@
+[package]
+name = "shader-mcve"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+smooth-bevy-cameras = "0.6.0"
+
+[dependencies.bevy]
+version = "0.9.1"
+features = [
+    "bevy_winit",
+    "render",
+    "jpeg",
+    "x11",
+]
+
+
+[dependencies.bevy_editor_pls]
+git = "https://github.com/jakobhellermann/bevy_editor_pls"
+rev = "50ea82bf08289bfe9fcf8a4f024d67d575f15548"
