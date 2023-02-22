@@ -1,3 +1,3 @@
-# Shader MCVE
+# Shader Playground
 
-Run with `trunk serve`
+Run with `trunk serve` or `cargo run`
