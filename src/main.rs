@@ -1,79 +1,93 @@
-use bevy::prelude::*;
-use bevy::reflect::TypeUuid;
-use bevy::render::render_resource::{AsBindGroup, ShaderRef};
-use bevy::window::PresentMode;
-use bevy_editor_pls::prelude::*;
-use smooth_bevy_cameras::{
-    controllers::unreal::{UnrealCameraBundle, UnrealCameraController, UnrealCameraPlugin},
-    LookTransformPlugin,
+//! A shader that reads a mesh's custom vertex attribute.
+use bevy::{
+    pbr::{MaterialPipeline, MaterialPipelineKey},
+    prelude::*,
+    reflect::TypeUuid,
+    render::{
+        mesh::{MeshVertexAttribute, MeshVertexBufferLayout},
+        render_resource::{
+            AsBindGroup, RenderPipelineDescriptor, ShaderRef, SpecializedMeshPipelineError,
+            VertexFormat,
+        },
+    },
 };
+use bevy_editor_pls::EditorPlugin;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            window: WindowDescriptor {
-                width: 800.,
-                height: 600.,
-                title: "Bevy game".to_string(),
-                canvas: Some("#bevy".to_owned()),
-                present_mode: PresentMode::AutoVsync,
-                ..default()
-            },
+        .add_plugins(DefaultPlugins.set(AssetPlugin {
+            watch_for_changes: true,
             ..default()
         }))
-        .add_plugin(MaterialPlugin::<GlowyMaterial>::default())
         .add_plugin(EditorPlugin)
-        .add_plugin(LookTransformPlugin)
-        .add_plugin(UnrealCameraPlugin::default())
-        .insert_resource(Msaa { samples: 4 })
-        .insert_resource(ClearColor(Color::rgb(0.4, 0.4, 0.4)))
+        .add_plugin(MaterialPlugin::<CustomMaterial>::default())
         .add_startup_system(setup)
         .run();
 }
 
+// A "high" random id should be used for custom attributes to ensure consistent sorting and avoid collisions with other attributes.
+// See the MeshVertexAttribute docs for more info.
+const ATTRIBUTE_BLEND_COLOR: MeshVertexAttribute =
+    MeshVertexAttribute::new("BlendColor", 988540917, VertexFormat::Float32x4);
+
+/// set up a simple 3D scene
 fn setup(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut materials: ResMut<Assets<GlowyMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<CustomMaterial>>,
 ) {
-    let texture = asset_server.load("texture.jpg");
+    let mut mesh = Mesh::from(shape::Cube { size: 1.0 });
+    mesh.insert_attribute(
+        ATTRIBUTE_BLEND_COLOR,
+        // The cube mesh has 24 vertices (6 faces, 4 vertices per face), so we insert one BlendColor for each
+        vec![[0.0, 1.0, 0.0, 1.0]; 24],
+    );
 
-    let material = materials.add(GlowyMaterial {
-        texture: texture.clone(),
+    // cube
+    commands.spawn(MaterialMeshBundle {
+        mesh: meshes.add(mesh),
+        transform: Transform::from_xyz(0.0, 0.5, 0.0),
+        material: materials.add(CustomMaterial {
+            color: Color::WHITE,
+        }),
+        ..default()
     });
 
-    let mesh = meshes.add(Mesh::from(shape::UVSphere {
-        radius: 1.0,
+    // camera
+    commands.spawn(Camera3dBundle {
+        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
-    }));
-    commands.spawn((
-        Name::new("Orb"),
-        TransformBundle::default(),
-        material,
-        mesh,
-        VisibilityBundle::default(),
-    ));
-
-    commands
-        .spawn((Name::new("Camera"), Camera3dBundle::default()))
-        .insert(UnrealCameraBundle::new(
-            UnrealCameraController::default(),
-            Vec3::new(0.0, 3.0, 0.0),
-            Vec3::new(0., 0., 0.),
-        ));
+    });
 }
 
+// This is the struct that will be passed to your shader
 #[derive(AsBindGroup, Debug, Clone, TypeUuid)]
-#[uuid = "bd5c76fd-6fdd-4de4-9744-4e8beea8daaf"]
-pub struct GlowyMaterial {
-    #[texture(0)]
-    #[sampler(1)]
-    pub texture: Handle<Image>,
+#[uuid = "f690fdae-d598-45ab-8225-97e2a3f056e0"]
+pub struct CustomMaterial {
+    #[uniform(0)]
+    color: Color,
 }
 
-impl Material for GlowyMaterial {
+impl Material for CustomMaterial {
+    fn vertex_shader() -> ShaderRef {
+        "grass.wgsl".into()
+    }
     fn fragment_shader() -> ShaderRef {
-        "glowy.wgsl".into()
+        "grass.wgsl".into()
+    }
+
+    fn specialize(
+        _pipeline: &MaterialPipeline<Self>,
+        descriptor: &mut RenderPipelineDescriptor,
+        layout: &MeshVertexBufferLayout,
+        _key: MaterialPipelineKey<Self>,
+    ) -> Result<(), SpecializedMeshPipelineError> {
+        let vertex_layout = layout.get_layout(&[
+            Mesh::ATTRIBUTE_POSITION.at_shader_location(0),
+            ATTRIBUTE_BLEND_COLOR.at_shader_location(1),
+            Mesh::ATTRIBUTE_NORMAL.at_shader_location(2),
+        ])?;
+        descriptor.vertex.buffers = vec![vertex_layout];
+        Ok(())
     }
 }
