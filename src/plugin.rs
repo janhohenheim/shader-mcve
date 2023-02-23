@@ -1,4 +1,5 @@
 use crate::cache::GrassCache;
+use crate::grass::add_aabb_box_to_grass;
 use crate::pipeline::GrassPipeline;
 use crate::GrassDrawCall;
 use crate::{extract, prepare, queue, RegionConfig};
@@ -32,7 +33,8 @@ impl Plugin for GrassPlugin {
         meshes.set_untracked(GRASS_MESH_HANDLE, default_grass_mesh());
         // Init resources
         app.init_resource::<RegionConfig>()
-            .register_type::<RegionConfig>();
+            .register_type::<RegionConfig>()
+            .add_system(add_aabb_box_to_grass);
         // Add extraction
         app.add_plugin(ExtractResourcePlugin::<RegionConfig>::default());
         // Init render app

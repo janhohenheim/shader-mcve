@@ -53,7 +53,7 @@ impl Default for GrassBundle {
     }
 }
 
-#[derive(Resource, Clone, Reflect)]
+#[derive(Resource, Clone, Reflect, ExtractResource)]
 #[reflect(Resource)]
 pub struct RegionConfig {
     pub color: Color,
@@ -64,15 +64,6 @@ impl FromWorld for RegionConfig {
         RegionConfig {
             color: Color::rgb(0.2, 0.5, 0.0),
         }
-    }
-}
-
-// Todo: Replace by ExtractResource derive
-impl ExtractResource for RegionConfig {
-    type Source = Self;
-
-    fn extract_resource(source: &Self::Source) -> Self {
-        source.clone()
     }
 }
 
