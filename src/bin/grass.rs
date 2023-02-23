@@ -35,4 +35,11 @@ fn setup_grass(mut commands: Commands) {
         .instances
         .extend(plane2.generate_grass(config).instances);
     commands.spawn((GrassBundle { grass, ..default() },));
+
+    // camera
+    commands.spawn(Camera3dBundle {
+        transform: Transform::from_xyz(-3.0, 8.5, 0.0)
+            .looking_at(Vec3::new(4.0, 5.0, 0.0), Vec3::Y),
+        ..default()
+    });
 }
