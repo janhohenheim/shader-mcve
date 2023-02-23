@@ -33,8 +33,7 @@ pub fn queue_grass_buffers(
             if !cacher.contains_key(&entity) {
                 continue;
             }
-            if let Some(mesh) = meshes.get(mesh_handle) {
-                // Todo: Should this emit an error on None?
+            let Some(mesh) = meshes.get(mesh_handle) {
                 let key =
                     view_key | MeshPipelineKey::from_primitive_topology(mesh.primitive_topology);
                 let pipeline = pipelines

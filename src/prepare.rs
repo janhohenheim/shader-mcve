@@ -14,6 +14,9 @@ pub fn prepare_instance_buffers(
     region_config: Res<RegionConfig>,
     render_device: Res<RenderDevice>,
 ) {
+    if !cache.is_changed() && !region_config.is_changed() {
+        return;
+    }
     for instance_data in cache.values_mut() {
         let entity_buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
             label: Some("Instance entity buffer"),
@@ -42,7 +45,7 @@ pub fn prepare_instance_buffers(
             ],
         };
         let bind_group = render_device.create_bind_group(&bind_group_descriptor);
-        instance_data.buffer = Some(entity_buffer); // Todo: Do we have to override this each time?
+        instance_data.buffer = Some(entity_buffer);
         instance_data.uniform_bind_ground = Some(bind_group);
     }
 }

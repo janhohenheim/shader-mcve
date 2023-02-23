@@ -68,7 +68,7 @@ impl SpecializedMeshPipeline for GrassPipeline {
                 VertexAttribute {
                     format: VertexFormat::Float32x3,
                     offset: 0,
-                    shader_location: 1, // Todo: can this be 0?
+                    shader_location: 1, // 0 is reserved for the position of the mesh
                 },
                 // height scale
                 VertexAttribute {

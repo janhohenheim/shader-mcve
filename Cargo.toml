@@ -22,4 +22,4 @@ features = [
 
 [dependencies.bevy_editor_pls]
 git = "https://github.com/jakobhellermann/bevy_editor_pls"
-rev = "50ea82bf08289bfe9fcf8a4f024d67d575f15548"
+rev = "6062b860aea87034081399369fd7ef5715f13256"
