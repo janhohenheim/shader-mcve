@@ -33,7 +33,7 @@ pub fn queue_grass_buffers(
             if !cacher.contains_key(&entity) {
                 continue;
             }
-            let Some(mesh) = meshes.get(mesh_handle) {
+            if let Some(mesh) = meshes.get(mesh_handle) {
                 let key =
                     view_key | MeshPipelineKey::from_primitive_topology(mesh.primitive_topology);
                 let pipeline = pipelines
