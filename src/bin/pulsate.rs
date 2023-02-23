@@ -12,6 +12,7 @@ use bevy::{
     },
 };
 use bevy_editor_pls::EditorPlugin;
+use sader_playground;
 
 fn main() {
     App::new()
@@ -70,10 +71,10 @@ pub struct CustomMaterial {
 
 impl Material for CustomMaterial {
     fn vertex_shader() -> ShaderRef {
-        "grass.wgsl".into()
+        "pulsating.wgsl".into()
     }
     fn fragment_shader() -> ShaderRef {
-        "grass.wgsl".into()
+        "pulsating.wgsl".into()
     }
 
     fn specialize(

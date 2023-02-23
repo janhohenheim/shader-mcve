@@ -24,7 +24,7 @@ struct VertexOutput {
 @vertex
 fn vertex(vertex: Vertex) -> VertexOutput {
     var out: VertexOutput;
-    let lambda = abs(sin(globals.time));
+    let lambda = abs(sin(globals.time)) * 0.5 + 0.2;
     let position = vertex.position + vertex.normal * lambda * lambda * lambda;
     out.clip_position = mesh_position_local_to_clip(mesh.model, vec4<f32>(position, 1.));
     out.blend_color = vertex.blend_color + vec4<f32>(position, 0.0);
