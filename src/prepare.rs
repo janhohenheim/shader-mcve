@@ -8,7 +8,7 @@ use bevy::render::render_resource::{
 };
 use bevy::render::renderer::RenderDevice;
 
-pub fn prepare_uniform_buffers(mut cache: ResMut<GrassCache>, render_device: Res<RenderDevice>) {
+pub fn prepare_instance_buffer(mut cache: ResMut<GrassCache>, render_device: Res<RenderDevice>) {
     if !cache.is_changed() {
         return;
     }
@@ -22,7 +22,7 @@ pub fn prepare_uniform_buffers(mut cache: ResMut<GrassCache>, render_device: Res
     }
 }
 
-pub fn prepare_instance_buffer(
+pub fn prepare_uniform_buffers(
     pipeline: Res<GrassPipeline>,
     mut cache: ResMut<GrassCache>,
     region_config: Res<RegionConfig>,

@@ -46,7 +46,10 @@ impl Plugin for GrassPlugin {
             .init_resource::<SpecializedMeshPipelines<GrassPipeline>>()
             .add_system_to_stage(RenderStage::Extract, extract::extract_grass)
             .add_system_to_stage(RenderStage::Prepare, prepare::prepare_uniform_buffers)
-            .add_system_to_stage(RenderStage::Prepare, prepare::prepare_instance_buffer)
+            .add_system_to_stage(
+                RenderStage::Prepare,
+                prepare::prepare_instance_buffer.after(prepare::prepare_uniform_buffers),
+            )
             .add_system_to_stage(RenderStage::Queue, queue::queue_grass_buffers);
     }
 }
