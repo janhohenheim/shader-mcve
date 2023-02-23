@@ -1,4 +1,4 @@
-use crate::cache::{EntityCache, GrassCache};
+use crate::cache::GrassCache;
 use crate::grass_pipeline::GrassPipeline;
 use crate::GrassDrawCall;
 use crate::{extract, prepare, queue, RegionConfig};
@@ -41,7 +41,6 @@ impl Plugin for GrassPlugin {
             .init_resource::<FallbackImage>()
             .init_resource::<GrassPipeline>()
             .init_resource::<GrassCache>()
-            .init_resource::<EntityCache>()
             .init_resource::<SpecializedMeshPipelines<GrassPipeline>>()
             .add_system_to_stage(RenderStage::Extract, extract::extract_grass)
             .add_system_to_stage(RenderStage::Prepare, prepare::prepare_instance_buffers)

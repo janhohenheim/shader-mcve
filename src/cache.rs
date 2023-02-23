@@ -12,14 +12,6 @@ pub struct GrassCache {
 pub struct CachedGrassChunk {
     pub grass: Grass,
     pub uniform_bind_ground: Option<BindGroup>,
-    // Todo: Rename to buffer
-    pub grass_buffer: Option<Buffer>,
+    pub buffer: Option<Buffer>,
     pub transform: GlobalTransform,
-}
-
-// Todo: Remove this type
-#[derive(Resource, DerefMut, Deref, Debug, Default)]
-pub struct EntityCache {
-    // Todo: Use HashSet
-    pub entities: Vec<Entity>,
 }

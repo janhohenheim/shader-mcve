@@ -1,4 +1,4 @@
-use crate::cache::EntityCache;
+use crate::cache::GrassCache;
 use crate::grass_pipeline::GrassPipeline;
 use crate::GrassDrawCall;
 use bevy::core_pipeline::core_3d::Opaque3d;
@@ -15,7 +15,7 @@ pub fn queue_grass_buffers(
     msaa: Res<Msaa>,
     mut pipelines: ResMut<SpecializedMeshPipelines<GrassPipeline>>,
     mut pipeline_cache: ResMut<PipelineCache>,
-    cacher: Res<EntityCache>,
+    cacher: Res<GrassCache>,
     meshes: Res<RenderAssets<Mesh>>,
     material_meshes: Query<(Entity, &MeshUniform, &Handle<Mesh>)>,
     mut views: Query<(&ExtractedView, &mut RenderPhase<Opaque3d>)>,
@@ -30,7 +30,7 @@ pub fn queue_grass_buffers(
         let view_key = msaa_key | MeshPipelineKey::from_hdr(view.hdr);
         let rangefinder = view.rangefinder3d();
         for (entity, mesh_uniform, mesh_handle) in material_meshes.iter() {
-            if !cacher.entities.contains(&entity) {
+            if !cacher.contains_key(&entity) {
                 continue;
             }
             if let Some(mesh) = meshes.get(mesh_handle) {

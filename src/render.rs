@@ -34,7 +34,7 @@ impl EntityRenderCommand for DrawMeshInstanced {
         // set uniform
         pass.set_bind_group(2, chunk.uniform_bind_ground.as_ref().unwrap(), &[]);
         pass.set_vertex_buffer(0, gpu_mesh.vertex_buffer.slice(..));
-        pass.set_vertex_buffer(1, chunk.grass_buffer.as_ref().unwrap().slice(..));
+        pass.set_vertex_buffer(1, chunk.buffer.as_ref().unwrap().slice(..));
         let grass_blade_count = chunk.grass.instances.len() as u32;
         match &gpu_mesh.buffer_info {
             GpuBufferInfo::Indexed {

@@ -42,7 +42,7 @@ pub fn prepare_instance_buffers(
             ],
         };
         let bind_group = render_device.create_bind_group(&bind_group_descriptor);
-        instance_data.grass_buffer = Some(entity_buffer); // Todo: Do we have to override this each time?
+        instance_data.buffer = Some(entity_buffer); // Todo: Do we have to override this each time?
         instance_data.uniform_bind_ground = Some(bind_group);
     }
 }
