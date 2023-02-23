@@ -12,7 +12,7 @@ pub mod plugin;
 
 // Render stuff:
 pub mod cache;
-pub mod grass_pipeline; // Todo: Rename to pipeline
+pub mod pipeline;
 
 // Render stages:
 pub mod extract;

@@ -1,5 +1,5 @@
 use crate::cache::GrassCache;
-use crate::grass_pipeline::GrassPipeline;
+use crate::pipeline::GrassPipeline;
 use crate::RegionConfig;
 use bevy::prelude::*;
 use bevy::render::render_resource::{

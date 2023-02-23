@@ -1,5 +1,5 @@
 use crate::cache::GrassCache;
-use crate::grass_pipeline::GrassPipeline;
+use crate::pipeline::GrassPipeline;
 use crate::GrassDrawCall;
 use bevy::core_pipeline::core_3d::Opaque3d;
 use bevy::pbr::{MeshPipelineKey, MeshUniform};

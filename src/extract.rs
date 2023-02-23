@@ -5,11 +5,7 @@ use bevy::render::Extract;
 
 pub fn extract_grass(
     grass_query: Extract<
-        Query<
-            (Entity, &Grass, &GlobalTransform, &ComputedVisibility),
-            // Todo: Only use Changed
-            Or<(Added<Grass>, Changed<Grass>)>,
-        >,
+        Query<(Entity, &Grass, &GlobalTransform, &ComputedVisibility), Changed<Grass>>,
     >,
     mut grass_cache: ResMut<GrassCache>,
 ) {

@@ -1,5 +1,5 @@
 use crate::cache::GrassCache;
-use crate::grass_pipeline::GrassPipeline;
+use crate::pipeline::GrassPipeline;
 use crate::GrassDrawCall;
 use crate::{extract, prepare, queue, RegionConfig};
 use bevy::asset::load_internal_asset;
