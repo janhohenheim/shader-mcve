@@ -4,9 +4,10 @@ use crate::RegionConfig;
 use bevy::prelude::*;
 use bevy::render::render_resource::{
     BindGroupDescriptor, BindGroupEntry, BindingResource, BufferBinding, BufferInitDescriptor,
-    BufferUsages,
+    BufferUsages, ShaderType,
 };
 use bevy::render::renderer::RenderDevice;
+use bytemuck::{Pod, Zeroable};
 
 pub fn prepare_instance_buffer(mut cache: ResMut<GrassCache>, render_device: Res<RenderDevice>) {
     if !cache.is_changed() {
@@ -32,15 +33,10 @@ pub fn prepare_uniform_buffers(
         return;
     }
 
+    let shader_config = ShaderRegionConfig::from(region_config.as_ref());
     let color_buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
-        label: Some("Color buffer"),
-        contents: bytemuck::cast_slice(&region_config.color.as_rgba_f32()),
-        usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
-    });
-
-    let bottom_color_buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
-        label: Some("Bottom color buffer"),
-        contents: bytemuck::cast_slice(&region_config.bottom_color.as_rgba_f32()),
+        label: Some("Config"),
+        contents: bytemuck::bytes_of(&shader_config),
         usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
     });
 
@@ -49,20 +45,11 @@ pub fn prepare_uniform_buffers(
         label: Some("Grass uniform bind group"),
         layout: &layout,
         entries: &[
-            // color
+            // config
             BindGroupEntry {
                 binding: 0,
                 resource: BindingResource::Buffer(BufferBinding {
                     buffer: &color_buffer,
-                    offset: 0,
-                    size: None,
-                }),
-            },
-            // bottom color
-            BindGroupEntry {
-                binding: 1,
-                resource: BindingResource::Buffer(BufferBinding {
-                    buffer: &bottom_color_buffer,
                     offset: 0,
                     size: None,
                 }),
@@ -73,5 +60,21 @@ pub fn prepare_uniform_buffers(
 
     for instance_data in cache.values_mut() {
         instance_data.uniform_bind_ground = Some(bind_group.clone());
+    }
+}
+
+#[derive(Debug, Clone, Copy, Pod, Zeroable, ShaderType)]
+#[repr(C)]
+struct ShaderRegionConfig {
+    main_color: Vec4,
+    bottom_color: Vec4,
+}
+
+impl From<&RegionConfig> for ShaderRegionConfig {
+    fn from(config: &RegionConfig) -> Self {
+        Self {
+            main_color: config.main_color.into(),
+            bottom_color: config.bottom_color.into(),
+        }
     }
 }

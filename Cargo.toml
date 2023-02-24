@@ -16,8 +16,8 @@ features = [
     "render",
     "jpeg",
     "x11",
-    "filesystem_watcher",
-    "dynamic"
+    #"filesystem_watcher",
+    #"dynamic"
 ]
 
 [dependencies.bevy_editor_pls]

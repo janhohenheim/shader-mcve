@@ -24,20 +24,9 @@ impl FromWorld for GrassPipeline {
         let region_layout = render_device.create_bind_group_layout(&BindGroupLayoutDescriptor {
             label: Some("Grass configuration layout"),
             entries: &[
-                // color
+                // config
                 BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: ShaderStages::VERTEX,
-                    ty: BindingType::Buffer {
-                        ty: BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
-                    },
-                    count: None,
-                },
-                // bottom color
-                BindGroupLayoutEntry {
-                    binding: 1,
                     visibility: ShaderStages::VERTEX,
                     ty: BindingType::Buffer {
                         ty: BufferBindingType::Uniform,

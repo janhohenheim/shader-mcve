@@ -8,8 +8,14 @@ use shader_playground::GrassBundle;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins.set(AssetPlugin {
-            watch_for_changes: true,
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            window: WindowDescriptor {
+                width: 800.,
+                height: 600.,
+                title: "Shader Playground".to_string(),
+                canvas: Some("#bevy".to_owned()),
+                ..default()
+            },
             ..default()
         }))
         .add_plugin(GrassPlugin)

@@ -1,17 +1,16 @@
 #import bevy_pbr::mesh_types
 #import bevy_pbr::mesh_view_bindings
 
-struct Config {
-    color: vec4<f32>,
+struct ShaderRegionConfig {
+    main_color: vec4<f32>,
     bottom_color: vec4<f32>,
 };
+
 @group(1) @binding(0)
 var<uniform> mesh: Mesh;
 
 @group(2) @binding(0)
-var<uniform> color: vec4<f32>;
-@group(2) @binding(1)
-var<uniform> bottom_color: vec4<f32>;
+var<uniform> config: ShaderRegionConfig;
 
 #import bevy_pbr::mesh_functions
 
@@ -37,9 +36,9 @@ fn vertex(vertex: Vertex) -> VertexOutput {
 
     out.clip_position = mesh_position_local_to_clip(mesh.model, vec4<f32>(position, 1.0));
 
-    let lambda = 1.0 - vertex.position.y;
+    let lambda = 1.0 - vertex.position.y / vertex.height;
     let lambda = lambda * lambda * lambda;
-    out.color = mix(color, bottom_color, lambda);
+    out.color = mix(config.main_color, config.bottom_color, lambda);
     return out;
 }
 

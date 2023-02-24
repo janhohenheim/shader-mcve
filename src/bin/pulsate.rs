@@ -12,7 +12,6 @@ use bevy::{
     },
 };
 use bevy_editor_pls::EditorPlugin;
-use sader_playground;
 
 fn main() {
     App::new()
