@@ -31,29 +31,31 @@ pub fn prepare_uniform_buffers(
     if !region_config.is_changed() {
         return;
     }
+
+    let color_buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
+        label: Some("Color buffer"),
+        contents: bytemuck::cast_slice(&region_config.color.as_rgba_f32()),
+        usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+    });
+    let layout = pipeline.region_outline.clone();
+    let bind_group_descriptor = BindGroupDescriptor {
+        label: Some("Grass uniform bind group"),
+        layout: &layout,
+        entries: &[
+            // color
+            BindGroupEntry {
+                binding: 0,
+                resource: BindingResource::Buffer(BufferBinding {
+                    buffer: &color_buffer,
+                    offset: 0,
+                    size: None,
+                }),
+            },
+        ],
+    };
+    let bind_group = render_device.create_bind_group(&bind_group_descriptor);
+
     for instance_data in cache.values_mut() {
-        let color_buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
-            label: Some("Color buffer"),
-            contents: bytemuck::cast_slice(&region_config.color.as_rgba_f32()),
-            usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
-        });
-        let layout = pipeline.region_outline.clone();
-        let bind_group_descriptor = BindGroupDescriptor {
-            label: Some("Grass uniform bind group"),
-            layout: &layout,
-            entries: &[
-                // color
-                BindGroupEntry {
-                    binding: 0,
-                    resource: BindingResource::Buffer(BufferBinding {
-                        buffer: &color_buffer,
-                        offset: 0,
-                        size: None,
-                    }),
-                },
-            ],
-        };
-        let bind_group = render_device.create_bind_group(&bind_group_descriptor);
-        instance_data.uniform_bind_ground = Some(bind_group);
+        instance_data.uniform_bind_ground = Some(bind_group.clone());
     }
 }
