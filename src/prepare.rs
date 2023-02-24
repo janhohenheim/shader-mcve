@@ -37,6 +37,13 @@ pub fn prepare_uniform_buffers(
         contents: bytemuck::cast_slice(&region_config.color.as_rgba_f32()),
         usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
     });
+
+    let bottom_color_buffer = render_device.create_buffer_with_data(&BufferInitDescriptor {
+        label: Some("Bottom color buffer"),
+        contents: bytemuck::cast_slice(&region_config.bottom_color.as_rgba_f32()),
+        usage: BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+    });
+
     let layout = pipeline.region_outline.clone();
     let bind_group_descriptor = BindGroupDescriptor {
         label: Some("Grass uniform bind group"),
@@ -47,6 +54,15 @@ pub fn prepare_uniform_buffers(
                 binding: 0,
                 resource: BindingResource::Buffer(BufferBinding {
                     buffer: &color_buffer,
+                    offset: 0,
+                    size: None,
+                }),
+            },
+            // bottom color
+            BindGroupEntry {
+                binding: 1,
+                resource: BindingResource::Buffer(BufferBinding {
+                    buffer: &bottom_color_buffer,
                     offset: 0,
                     size: None,
                 }),

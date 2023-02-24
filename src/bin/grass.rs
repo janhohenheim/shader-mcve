@@ -8,7 +8,10 @@ use shader_playground::GrassBundle;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(AssetPlugin {
+            watch_for_changes: true,
+            ..default()
+        }))
         .add_plugin(GrassPlugin)
         .add_plugin(EditorPlugin)
         .add_startup_system(setup_grass)

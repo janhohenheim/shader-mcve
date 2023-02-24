@@ -35,6 +35,17 @@ impl FromWorld for GrassPipeline {
                     },
                     count: None,
                 },
+                // bottom color
+                BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: ShaderStages::VERTEX,
+                    ty: BindingType::Buffer {
+                        ty: BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                },
             ],
         });
         let shader = GRASS_SHADER_HANDLE.typed::<Shader>();

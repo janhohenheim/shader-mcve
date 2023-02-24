@@ -57,12 +57,14 @@ impl Default for GrassBundle {
 #[reflect(Resource)]
 pub struct RegionConfig {
     pub color: Color,
+    pub bottom_color: Color,
 }
 
 impl FromWorld for RegionConfig {
     fn from_world(_world: &mut World) -> Self {
         RegionConfig {
             color: Color::rgb(0.2, 0.5, 0.0),
+            bottom_color: Color::rgb(0.0, 0.0, 0.0),
         }
     }
 }

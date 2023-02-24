@@ -31,6 +31,7 @@ impl EntityRenderCommand for DrawMeshInstanced {
             return RenderCommandResult::Failure;
         }
         let chunk = cache.into_inner().get(&item).unwrap();
+
         // set uniform
         pass.set_bind_group(2, chunk.uniform_bind_ground.as_ref().unwrap(), &[]);
         pass.set_vertex_buffer(0, gpu_mesh.vertex_buffer.slice(..));
