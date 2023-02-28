@@ -1,7 +1,5 @@
 //! Shows how to render to a texture. Useful for mirrors, UI, or exporting images.
 
-use std::f32::consts::PI;
-
 use bevy::{
     core_pipeline::clear_color::ClearColorConfig,
     prelude::*,
@@ -14,10 +12,12 @@ use bevy::{
     },
 };
 use bevy_editor_pls::EditorPlugin;
+use smooth_bevy_cameras::LookTransform;
 use smooth_bevy_cameras::{
     controllers::orbit::{OrbitCameraBundle, OrbitCameraController, OrbitCameraPlugin},
     LookTransformPlugin,
 };
+use std::f32::consts::PI;
 
 fn main() {
     App::new()
@@ -105,23 +105,61 @@ fn setup(
         ..default()
     });
 
-    commands
-        .spawn((
-            Name::new("Inner camera"),
-            Camera3dBundle {
-                camera_3d: Camera3d {
-                    clear_color: ClearColorConfig::Custom(Color::NONE),
-                    ..default()
-                },
-                camera: Camera {
-                    // render before the "main pass" camera
-                    priority: -1,
-                    target: RenderTarget::Image(image_handle.clone()),
-                    ..default()
-                },
+    commands.spawn((
+        Name::new("Inner camera"),
+        Camera3dBundle {
+            camera_3d: Camera3d {
+                clear_color: ClearColorConfig::Custom(Color::NONE),
                 ..default()
             },
-            first_pass_layer,
+            camera: Camera {
+                // render before the "main pass" camera
+                priority: -1,
+                target: RenderTarget::Image(image_handle.clone()),
+
+                ..default()
+            },
+            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 15.0))
+                .looking_at(Vec3::ZERO, Vec3::Y),
+            ..default()
+        },
+        first_pass_layer,
+    ));
+
+    // This material has the texture that has been rendered.
+    let material_handle = materials.add(StandardMaterial {
+        base_color_texture: Some(image_handle),
+        reflectance: 0.02,
+        unlit: true,
+        //alpha_mode: AlphaMode::Blend,
+        ..default()
+    });
+
+    let plane_handle = meshes.add(Mesh::from(shape::Plane { size: 4.0 }));
+    // Main pass cube, with material containing the rendered first pass texture.
+    commands
+        .spawn((
+            Name::new("Outer object"),
+            MainPassCube,
+            SpatialBundle::default(),
+        ))
+        .with_children(|parent| {
+            parent.spawn(PbrBundle {
+                mesh: plane_handle,
+                material: material_handle,
+                transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 2.0)),
+                ..default()
+            });
+        });
+
+    // The main pass camera.
+    commands
+        .spawn((
+            Name::new("Outer camera"),
+            Camera3dBundle {
+                transform: Transform::from_xyz(0.0, 0.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
+                ..default()
+            },
         ))
         .insert(OrbitCameraBundle::new(
             OrbitCameraController::default(),
@@ -129,38 +167,6 @@ fn setup(
             Vec3::ZERO,
             Vec3::Y,
         ));
-
-    // This material has the texture that has been rendered.
-    let material_handle = materials.add(StandardMaterial {
-        base_color_texture: Some(image_handle),
-        reflectance: 0.02,
-        unlit: true,
-        alpha_mode: AlphaMode::Blend,
-        ..default()
-    });
-
-    let plane_handle = meshes.add(Mesh::from(shape::Plane { size: 4.0 }));
-    // Main pass cube, with material containing the rendered first pass texture.
-    commands.spawn((
-        Name::new("Outer object"),
-        PbrBundle {
-            mesh: plane_handle,
-            material: material_handle,
-            transform: Transform::from_xyz(0.0, 0.0, 1.5)
-                .with_rotation(Quat::from_rotation_x(-PI / 5.0)),
-            ..default()
-        },
-        MainPassCube,
-    ));
-
-    // The main pass camera.
-    commands.spawn((
-        Name::new("Outer camera"),
-        Camera3dBundle {
-            transform: Transform::from_xyz(0.0, 0.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
-            ..default()
-        },
-    ));
 }
 
 /// Rotates the inner cube (first pass)
@@ -172,9 +178,14 @@ fn rotator_system(time: Res<Time>, mut query: Query<&mut Transform, With<FirstPa
 }
 
 /// Rotates the outer cube (main pass)
-fn cube_rotator_system(time: Res<Time>, mut query: Query<&mut Transform, With<MainPassCube>>) {
-    for mut transform in &mut query {
-        transform.rotate_x(1.0 * time.delta_seconds());
-        transform.rotate_y(0.7 * time.delta_seconds());
+fn cube_rotator_system(
+    mut cube_query: Query<&mut Transform, (Without<LookTransform>, With<MainPassCube>)>,
+    camera_query: Query<&Transform, (With<LookTransform>, Without<MainPassCube>)>,
+) {
+    for mut cube_transform in &mut cube_query {
+        for camera_transform in camera_query.iter() {
+            //let up = cube_transform.up();
+            cube_transform.look_at(camera_transform.translation, camera_transform.up());
+        }
     }
 }
