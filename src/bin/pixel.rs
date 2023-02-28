@@ -12,7 +12,6 @@ use bevy::{
     },
 };
 use bevy_editor_pls::EditorPlugin;
-use smooth_bevy_cameras::LookTransform;
 use smooth_bevy_cameras::{
     controllers::orbit::{OrbitCameraBundle, OrbitCameraController, OrbitCameraPlugin},
     LookTransformPlugin,
@@ -28,8 +27,8 @@ fn main() {
         .insert_resource(Msaa { samples: 1 })
         .add_plugin(EditorPlugin)
         .add_startup_system(setup)
-        .add_system(cube_rotator_system)
-        .add_system(rotator_system)
+        .add_system(rotate_canvas)
+        .add_system(sync_cameras)
         .run();
 }
 
@@ -40,6 +39,12 @@ struct FirstPassCube;
 // Marks the main pass cube, to which the texture is applied.
 #[derive(Component)]
 struct MainPassCube;
+
+#[derive(Component)]
+struct InnerCamera;
+
+#[derive(Component)]
+struct OuterCamera;
 
 fn setup(
     mut commands: Commands,
@@ -123,6 +128,7 @@ fn setup(
                 .looking_at(Vec3::ZERO, Vec3::Y),
             ..default()
         },
+        InnerCamera,
         first_pass_layer,
     ));
 
@@ -131,11 +137,11 @@ fn setup(
         base_color_texture: Some(image_handle),
         reflectance: 0.02,
         unlit: true,
-        //alpha_mode: AlphaMode::Blend,
+        alpha_mode: AlphaMode::Blend,
         ..default()
     });
 
-    let plane_handle = meshes.add(Mesh::from(shape::Plane { size: 4.0 }));
+    let plane_handle = meshes.add(Mesh::from(shape::Plane { size: 20.0 }));
     // Main pass cube, with material containing the rendered first pass texture.
     commands
         .spawn((
@@ -160,6 +166,7 @@ fn setup(
                 transform: Transform::from_xyz(0.0, 0.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
                 ..default()
             },
+            OuterCamera,
         ))
         .insert(OrbitCameraBundle::new(
             OrbitCameraController::default(),
@@ -170,22 +177,28 @@ fn setup(
 }
 
 /// Rotates the inner cube (first pass)
-fn rotator_system(time: Res<Time>, mut query: Query<&mut Transform, With<FirstPassCube>>) {
-    for mut transform in &mut query {
-        transform.rotate_x(1.5 * time.delta_seconds());
-        transform.rotate_z(1.3 * time.delta_seconds());
+fn sync_cameras(
+    mut inner_camera_query: Query<&mut Transform, (Without<OuterCamera>, With<InnerCamera>)>,
+    outer_camera_query: Query<&Transform, (With<OuterCamera>, Without<MainPassCube>)>,
+) {
+    for mut inner_camera_transform in &mut inner_camera_query {
+        for outer_camera_transform in outer_camera_query.iter() {
+            inner_camera_transform.translation = outer_camera_transform.translation;
+            let up = inner_camera_transform.up();
+            inner_camera_transform.look_at(Vec3::ZERO, up);
+        }
     }
 }
 
 /// Rotates the outer cube (main pass)
-fn cube_rotator_system(
-    mut cube_query: Query<&mut Transform, (Without<LookTransform>, With<MainPassCube>)>,
-    camera_query: Query<&Transform, (With<LookTransform>, Without<MainPassCube>)>,
+fn rotate_canvas(
+    mut cube_query: Query<&mut Transform, (Without<OuterCamera>, With<MainPassCube>)>,
+    camera_query: Query<&Transform, (With<OuterCamera>, Without<MainPassCube>)>,
 ) {
     for mut cube_transform in &mut cube_query {
         for camera_transform in camera_query.iter() {
-            //let up = cube_transform.up();
-            cube_transform.look_at(camera_transform.translation, camera_transform.up());
+            let up = cube_transform.up();
+            cube_transform.look_at(camera_transform.translation, up);
         }
     }
 }
