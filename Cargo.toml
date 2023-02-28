@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 bytemuck = "1.13.0"
 rand = { version = "0.8.5", features = ["small_rng"] }
+smooth-bevy-cameras = "0.7.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

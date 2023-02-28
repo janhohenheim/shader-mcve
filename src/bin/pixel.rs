@@ -14,11 +14,17 @@ use bevy::{
     },
 };
 use bevy_editor_pls::EditorPlugin;
+use smooth_bevy_cameras::{
+    controllers::orbit::{OrbitCameraBundle, OrbitCameraController, OrbitCameraPlugin},
+    LookTransformPlugin,
+};
 
 fn main() {
     App::new()
         // Needed for pixelation not looking blurry
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugin(LookTransformPlugin)
+        .add_plugin(OrbitCameraPlugin::default())
         .insert_resource(Msaa { samples: 1 })
         .add_plugin(EditorPlugin)
         .add_startup_system(setup)
@@ -99,25 +105,30 @@ fn setup(
         ..default()
     });
 
-    commands.spawn((
-        Name::new("Inner camera"),
-        Camera3dBundle {
-            camera_3d: Camera3d {
-                clear_color: ClearColorConfig::Custom(Color::NONE),
+    commands
+        .spawn((
+            Name::new("Inner camera"),
+            Camera3dBundle {
+                camera_3d: Camera3d {
+                    clear_color: ClearColorConfig::Custom(Color::NONE),
+                    ..default()
+                },
+                camera: Camera {
+                    // render before the "main pass" camera
+                    priority: -1,
+                    target: RenderTarget::Image(image_handle.clone()),
+                    ..default()
+                },
                 ..default()
             },
-            camera: Camera {
-                // render before the "main pass" camera
-                priority: -1,
-                target: RenderTarget::Image(image_handle.clone()),
-                ..default()
-            },
-            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 15.0))
-                .looking_at(Vec3::ZERO, Vec3::Y),
-            ..default()
-        },
-        first_pass_layer,
-    ));
+            first_pass_layer,
+        ))
+        .insert(OrbitCameraBundle::new(
+            OrbitCameraController::default(),
+            Vec3::new(0.0, 0.0, 15.0),
+            Vec3::ZERO,
+            Vec3::Y,
+        ));
 
     // This material has the texture that has been rendered.
     let material_handle = materials.add(StandardMaterial {
