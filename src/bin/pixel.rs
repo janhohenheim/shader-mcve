@@ -17,7 +17,9 @@ use bevy_editor_pls::EditorPlugin;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        // Needed for pixelation not looking blurry
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .insert_resource(Msaa { samples: 1 })
         .add_plugin(EditorPlugin)
         .add_startup_system(setup)
         .add_system(cube_rotator_system)
@@ -79,6 +81,7 @@ fn setup(
 
     // The cube that will be rendered to the texture.
     commands.spawn((
+        Name::new("Inner object"),
         PbrBundle {
             mesh: cube_handle,
             material: cube_material_handle,
@@ -97,6 +100,7 @@ fn setup(
     });
 
     commands.spawn((
+        Name::new("Inner camera"),
         Camera3dBundle {
             camera_3d: Camera3d {
                 clear_color: ClearColorConfig::Custom(Color::WHITE),
@@ -115,9 +119,6 @@ fn setup(
         first_pass_layer,
     ));
 
-    let cube_size = 4.0;
-    let cube_handle = meshes.add(Mesh::from(shape::Box::new(cube_size, cube_size, cube_size)));
-
     // This material has the texture that has been rendered.
     let material_handle = materials.add(StandardMaterial {
         base_color_texture: Some(image_handle),
@@ -126,10 +127,12 @@ fn setup(
         ..default()
     });
 
+    let plane_handle = meshes.add(Mesh::from(shape::Plane { size: 4.0 }));
     // Main pass cube, with material containing the rendered first pass texture.
     commands.spawn((
+        Name::new("Outer object"),
         PbrBundle {
-            mesh: cube_handle,
+            mesh: plane_handle,
             material: material_handle,
             transform: Transform::from_xyz(0.0, 0.0, 1.5)
                 .with_rotation(Quat::from_rotation_x(-PI / 5.0)),
@@ -139,10 +142,13 @@ fn setup(
     ));
 
     // The main pass camera.
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(0.0, 0.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
+    commands.spawn((
+        Name::new("Outer camera"),
+        Camera3dBundle {
+            transform: Transform::from_xyz(0.0, 0.0, 15.0).looking_at(Vec3::ZERO, Vec3::Y),
+            ..default()
+        },
+    ));
 }
 
 /// Rotates the inner cube (first pass)
