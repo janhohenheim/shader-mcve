@@ -96,7 +96,6 @@ fn setup(
         PbrBundle {
             mesh: cube_handle,
             material: cube_material_handle,
-            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 1.0)),
             ..default()
         },
         FirstPassCube,
@@ -183,7 +182,8 @@ fn sync_cameras(
 ) {
     for mut inner_camera_transform in &mut inner_camera_query {
         for outer_camera_transform in outer_camera_query.iter() {
-            inner_camera_transform.translation = outer_camera_transform.translation;
+            inner_camera_transform.translation =
+                outer_camera_transform.translation.normalize() * 10.0;
             let up = inner_camera_transform.up();
             inner_camera_transform.look_at(Vec3::ZERO, up);
         }
