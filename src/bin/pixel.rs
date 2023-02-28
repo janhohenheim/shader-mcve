@@ -24,6 +24,7 @@ fn main() {
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         .add_plugin(LookTransformPlugin)
         .add_plugin(OrbitCameraPlugin::default())
+        // Needed for pixelation not looking blurry
         .insert_resource(Msaa { samples: 1 })
         .add_plugin(EditorPlugin)
         .add_startup_system(setup)
