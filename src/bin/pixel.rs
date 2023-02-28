@@ -103,7 +103,7 @@ fn setup(
         Name::new("Inner camera"),
         Camera3dBundle {
             camera_3d: Camera3d {
-                clear_color: ClearColorConfig::Custom(Color::WHITE),
+                clear_color: ClearColorConfig::Custom(Color::NONE),
                 ..default()
             },
             camera: Camera {
@@ -123,7 +123,8 @@ fn setup(
     let material_handle = materials.add(StandardMaterial {
         base_color_texture: Some(image_handle),
         reflectance: 0.02,
-        unlit: false,
+        unlit: true,
+        alpha_mode: AlphaMode::Blend,
         ..default()
     });
 
