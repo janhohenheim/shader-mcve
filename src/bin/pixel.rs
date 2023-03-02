@@ -47,6 +47,9 @@ struct InnerCamera;
 #[derive(Component)]
 struct OuterCamera;
 
+const CUBE_SIZE: f32 = 4.0;
+const INNER_CAMERA_DISTANCE: f32 = CUBE_SIZE * 2.0;
+
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -80,7 +83,7 @@ fn setup(
 
     let image_handle = images.add(image);
 
-    let cube_handle = meshes.add(Mesh::from(shape::Cube { size: 4.0 }));
+    let cube_handle = meshes.add(Mesh::from(shape::Cube { size: CUBE_SIZE }));
     let cube_material_handle = materials.add(StandardMaterial {
         base_color: Color::rgb(0.8, 0.7, 0.6),
         reflectance: 0.02,
@@ -141,7 +144,9 @@ fn setup(
         ..default()
     });
 
-    let plane_handle = meshes.add(Mesh::from(shape::Plane { size: 20.0 }));
+    let plane_handle = meshes.add(Mesh::from(shape::Plane {
+        size: INNER_CAMERA_DISTANCE,
+    }));
     // Main pass cube, with material containing the rendered first pass texture.
     commands
         .spawn((
@@ -153,7 +158,11 @@ fn setup(
             parent.spawn(PbrBundle {
                 mesh: plane_handle,
                 material: material_handle,
-                transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 2.0)),
+                transform: Transform {
+                    translation: Vec3::new(0.0, INNER_CAMERA_DISTANCE / 2., 0.),
+                    rotation: Quat::from_rotation_x(-PI / 2.0),
+                    ..default()
+                },
                 ..default()
             });
         });
@@ -174,6 +183,16 @@ fn setup(
             Vec3::ZERO,
             Vec3::Y,
         ));
+
+    // Ground
+    commands.spawn((
+        Name::new("Ground"),
+        PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::Plane { size: 20.0 })),
+            material: materials.add(Color::rgb(0.5, 0.5, 0.5).into()),
+            ..default()
+        },
+    ));
 }
 
 /// Rotates the inner cube (first pass)
@@ -184,9 +203,8 @@ fn sync_cameras(
     for mut inner_camera_transform in &mut inner_camera_query {
         for outer_camera_transform in outer_camera_query.iter() {
             inner_camera_transform.translation =
-                outer_camera_transform.translation.normalize() * 10.0;
-            let up = inner_camera_transform.up();
-            inner_camera_transform.look_at(Vec3::ZERO, up);
+                outer_camera_transform.translation.normalize() * INNER_CAMERA_DISTANCE;
+            inner_camera_transform.look_at(Vec3::ZERO, Vec3::Y);
         }
     }
 }
@@ -198,8 +216,7 @@ fn rotate_canvas(
 ) {
     for mut cube_transform in &mut cube_query {
         for camera_transform in camera_query.iter() {
-            let up = cube_transform.up();
-            cube_transform.look_at(camera_transform.translation, up);
+            cube_transform.look_at(camera_transform.translation, Vec3::Y);
         }
     }
 }
