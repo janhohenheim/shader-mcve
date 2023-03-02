@@ -48,7 +48,7 @@ struct InnerCamera;
 struct OuterCamera;
 
 const CUBE_SIZE: f32 = 4.0;
-const INNER_CAMERA_DISTANCE: f32 = CUBE_SIZE * 2.0;
+const INNER_CAMERA_DISTANCE: f32 = CUBE_SIZE * 3.0;
 
 fn setup(
     mut commands: Commands,
@@ -57,8 +57,8 @@ fn setup(
     mut images: ResMut<Assets<Image>>,
 ) {
     let size = Extent3d {
-        width: 64,
-        height: 64,
+        width: 128,
+        height: 128,
         ..default()
     };
 
@@ -84,10 +84,9 @@ fn setup(
     let image_handle = images.add(image);
 
     let cube_handle = meshes.add(Mesh::from(shape::Cube { size: CUBE_SIZE }));
-    let cube_material_handle = materials.add(StandardMaterial {
+    let inner_cube_material_handle = materials.add(StandardMaterial {
         base_color: Color::rgb(0.8, 0.7, 0.6),
         reflectance: 0.02,
-        unlit: false,
         ..default()
     });
 
@@ -98,8 +97,8 @@ fn setup(
     commands.spawn((
         Name::new("Inner object"),
         PbrBundle {
-            mesh: cube_handle,
-            material: cube_material_handle,
+            mesh: cube_handle.clone(),
+            material: inner_cube_material_handle,
             ..default()
         },
         FirstPassCube,
@@ -109,7 +108,7 @@ fn setup(
     // Light
     // NOTE: Currently lights are shared between passes - see https://github.com/bevyengine/bevy/issues/3462
     commands.spawn(PointLightBundle {
-        transform: Transform::from_translation(Vec3::new(0.0, 0.0, 10.0)),
+        transform: Transform::from_translation(Vec3::new(0.0, 10.0, 10.0)),
         ..default()
     });
 
@@ -136,9 +135,8 @@ fn setup(
     ));
 
     // This material has the texture that has been rendered.
-    let material_handle = materials.add(StandardMaterial {
+    let plane_material_handle = materials.add(StandardMaterial {
         base_color_texture: Some(image_handle),
-        reflectance: 0.02,
         unlit: true,
         alpha_mode: AlphaMode::Blend,
         ..default()
@@ -147,25 +145,37 @@ fn setup(
     let plane_handle = meshes.add(Mesh::from(shape::Plane {
         size: INNER_CAMERA_DISTANCE,
     }));
+
     // Main pass cube, with material containing the rendered first pass texture.
     commands
         .spawn((
             Name::new("Outer object"),
             MainPassCube,
-            SpatialBundle::default(),
+            SpatialBundle::from_transform(Transform::from_xyz(0.0, CUBE_SIZE / 2., 0.0)),
         ))
         .with_children(|parent| {
             parent.spawn(PbrBundle {
                 mesh: plane_handle,
-                material: material_handle,
-                transform: Transform {
-                    translation: Vec3::new(0.0, INNER_CAMERA_DISTANCE / 2., 0.),
-                    rotation: Quat::from_rotation_x(-PI / 2.0),
-                    ..default()
-                },
+                material: plane_material_handle,
+                transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 2.0)),
                 ..default()
             });
         });
+
+    let shadow_cube_material_handle = materials.add(StandardMaterial {
+        base_color: Color::NONE,
+        alpha_mode: AlphaMode::Mask(1.),
+        ..default()
+    });
+    // The shadow of the cube
+    commands.spawn((
+        Name::new("Shadow object"),
+        PbrBundle {
+            mesh: cube_handle.clone(),
+            material: shadow_cube_material_handle,
+            ..default()
+        },
+    ));
 
     // The main pass camera.
     commands
@@ -189,7 +199,7 @@ fn setup(
         Name::new("Ground"),
         PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Plane { size: 20.0 })),
-            material: materials.add(Color::rgb(0.5, 0.5, 0.5).into()),
+            material: materials.add(Color::WHITE.into()),
             ..default()
         },
     ));
