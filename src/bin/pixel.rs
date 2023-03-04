@@ -93,17 +93,90 @@ fn setup(
     // This specifies the layer used for the first pass, which will be attached to the first pass camera and cube.
     let first_pass_layer = RenderLayers::layer(1);
 
+    let plane_handle = meshes.add(Mesh::from(shape::Plane {
+        size: INNER_CAMERA_DISTANCE,
+    }));
+
+    // This material has the texture that has been rendered.
+    let plane_material_handle = materials.add(StandardMaterial {
+        base_color_texture: Some(image_handle.clone()),
+        unlit: true,
+        //alpha_mode: AlphaMode::Blend,
+        ..default()
+    });
+    let shadow_cube_material_handle = materials.add(StandardMaterial {
+        base_color: Color::NONE,
+        alpha_mode: AlphaMode::Mask(1.),
+        ..default()
+    });
+
     // The cube that will be rendered to the texture.
-    commands.spawn((
-        Name::new("Inner object"),
-        PbrBundle {
-            mesh: cube_handle.clone(),
-            material: inner_cube_material_handle,
-            ..default()
-        },
-        FirstPassCube,
-        first_pass_layer,
-    ));
+    commands
+        .spawn((
+            Name::new("Inner object"),
+            PbrBundle {
+                mesh: cube_handle.clone(),
+                material: inner_cube_material_handle.clone(),
+                transform: Transform::from_xyz(0., CUBE_SIZE / 2., 0.),
+                ..default()
+            },
+            FirstPassCube,
+            first_pass_layer,
+        ))
+        .with_children(|parent| {
+            parent.spawn((
+                Name::new("Inner camera"),
+                Camera3dBundle {
+                    camera_3d: Camera3d {
+                        clear_color: ClearColorConfig::Custom(Color::NONE),
+                        ..default()
+                    },
+                    camera: Camera {
+                        // render before the "main pass" camera
+                        priority: -1,
+                        target: RenderTarget::Image(image_handle.clone()),
+
+                        ..default()
+                    },
+                    ..default()
+                },
+                InnerCamera,
+                first_pass_layer,
+            ));
+            // Main pass cube, with material containing the rendered first pass texture.
+            parent
+                .spawn((
+                    Name::new("Outer object"),
+                    MainPassCube,
+                    SpatialBundle::default(),
+                ))
+                .with_children(|parent| {
+                    parent.spawn(PbrBundle {
+                        mesh: plane_handle,
+                        material: plane_material_handle,
+                        transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 2.0)),
+                        ..default()
+                    });
+                });
+
+            // The shadow of the cube
+            parent.spawn((
+                Name::new("Shadow object"),
+                PbrBundle {
+                    mesh: cube_handle.clone(),
+                    material: shadow_cube_material_handle,
+                    ..default()
+                },
+            ));
+            parent.spawn((
+                Name::new("Inner object debug"),
+                PbrBundle {
+                    mesh: cube_handle.clone(),
+                    material: inner_cube_material_handle,
+                    ..default()
+                },
+            ));
+        });
 
     // Light
     // NOTE: Currently lights are shared between passes - see https://github.com/bevyengine/bevy/issues/3462
@@ -111,71 +184,6 @@ fn setup(
         transform: Transform::from_translation(Vec3::new(0.0, 10.0, 10.0)),
         ..default()
     });
-
-    commands.spawn((
-        Name::new("Inner camera"),
-        Camera3dBundle {
-            camera_3d: Camera3d {
-                clear_color: ClearColorConfig::Custom(Color::NONE),
-                ..default()
-            },
-            camera: Camera {
-                // render before the "main pass" camera
-                priority: -1,
-                target: RenderTarget::Image(image_handle.clone()),
-
-                ..default()
-            },
-            transform: Transform::from_translation(Vec3::new(0.0, 0.0, 15.0))
-                .looking_at(Vec3::ZERO, Vec3::Y),
-            ..default()
-        },
-        InnerCamera,
-        first_pass_layer,
-    ));
-
-    // This material has the texture that has been rendered.
-    let plane_material_handle = materials.add(StandardMaterial {
-        base_color_texture: Some(image_handle),
-        unlit: true,
-        alpha_mode: AlphaMode::Blend,
-        ..default()
-    });
-
-    let plane_handle = meshes.add(Mesh::from(shape::Plane {
-        size: INNER_CAMERA_DISTANCE,
-    }));
-
-    // Main pass cube, with material containing the rendered first pass texture.
-    commands
-        .spawn((
-            Name::new("Outer object"),
-            MainPassCube,
-            SpatialBundle::from_transform(Transform::from_xyz(0.0, CUBE_SIZE / 2., 0.0)),
-        ))
-        .with_children(|parent| {
-            parent.spawn(PbrBundle {
-                mesh: plane_handle,
-                material: plane_material_handle,
-                transform: Transform::from_rotation(Quat::from_rotation_x(-PI / 2.0)),
-                ..default()
-            });
-        });
-
-    let shadow_cube_material_handle = materials.add(StandardMaterial {
-        base_color: Color::NONE,
-        alpha_mode: AlphaMode::Mask(1.),
-        ..default()
-    });
-    // The shadow of the cube
-    commands.spawn((
-        Name::new("Shadow object"),
-        PbrBundle {
-            mesh: cube_handle.clone(),
-            material: shadow_cube_material_handle,
-            ..default()
-        },
-    ));
 
     // The main pass camera.
     commands
@@ -199,7 +207,10 @@ fn setup(
         Name::new("Ground"),
         PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Plane { size: 20.0 })),
-            material: materials.add(Color::WHITE.into()),
+            material: materials.add(StandardMaterial {
+                base_color: Color::WHITE,
+                ..default()
+            }),
             ..default()
         },
     ));
